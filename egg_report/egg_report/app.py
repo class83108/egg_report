@@ -397,6 +397,10 @@ def upload_file():
     if df.empty:
         return jsonify({"error": "沒有找到有效的表格數據"}), 400
 
+    # 將DataFrame轉換為HTML表格 (不顯示索引並去除"來源文件"列)
+    if "來源文件" in df.columns:
+        df = df.drop(columns=["來源文件"])
+
     # 將DataFrame轉換為HTML表格
     table_html = df.to_html(classes="table table-striped table-bordered")
 

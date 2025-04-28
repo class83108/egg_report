@@ -21,6 +21,23 @@
             margin-top: 20px;
             text-align: center;
         }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .toast.show {
+            display: block;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -57,13 +74,18 @@
                 <div class="card-body">
                     <div id="resultTable"></div>
                     <div class="mt-3">
-                        <a id="downloadExcel" class="btn btn-success me-2">下載Excel</a>
+                        <button id="copyTable" class="btn btn-primary">複製表格到剪貼簿</button>
                     </div>
                 </div>
             </div>
         </div>
         
         <div id="error" class="alert alert-danger hidden" role="alert"></div>
+    </div>
+    
+    <!-- 提示訊息 -->
+    <div id="copyToast" class="toast">
+        已複製到剪貼簿
     </div>
     
     <script>
@@ -101,9 +123,10 @@
                 
                 // 顯示結果
                 document.getElementById('resultTable').innerHTML = result.data.table_html;
-                document.getElementById('downloadExcel').href = result.data.excel_path;
-
                 document.getElementById('result').classList.remove('hidden');
+
+                // 設置複製表格按鈕的事件
+                document.getElementById('copyTable').addEventListener('click', copyTableToClipboard);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -116,6 +139,51 @@
             errorElement.textContent = message;
             errorElement.classList.remove('hidden');
             document.getElementById('loading').classList.add('hidden');
+        }
+
+        function copyTableToClipboard() {
+            // 找到表格元素
+            const tableElement = document.querySelector('#resultTable table');
+            if (!tableElement) {
+                showError('找不到可複製的表格');
+                return;
+            }
+
+            // 創建一個範圍來選擇表格
+            const range = document.createRange();
+            range.selectNode(tableElement);
+            
+            // 清除當前選擇
+            window.getSelection().removeAllRanges();
+            
+            // 添加新的選擇
+            window.getSelection().addRange(range);
+            
+            // 執行複製命令
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('已複製到剪貼簿');
+                } else {
+                    showError('複製失敗');
+                }
+            } catch (err) {
+                showError('複製出錯: ' + err);
+            }
+            
+            // 清除選擇
+            window.getSelection().removeAllRanges();
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('copyToast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            // 3秒後隱藏提示
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
     </script>
 </body>
